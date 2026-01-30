@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Refresh activities and dropdown to show updated participants
         await fetchActivities();
-      } else {"},{
+      } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
       }
