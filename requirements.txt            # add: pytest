@@ -1,0 +1,14 @@
+pytest
+
+```json
+{
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ]
+}
+```
+
+def test_smoke():
+    assert True
