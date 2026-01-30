@@ -7,7 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      // Prevent potential caching so we always get the latest participants
+      const response = await fetch("/activities", { cache: "no-store" });
       const activities = await response.json();
 
       // Clear loading message
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="participants-section">
               <strong>Participants (${details.participants.length}):</strong>
               <ul class="participants-list">
-                ${details.participants.map(p => `<li>${p}</li>`).join("")}
+                ${details.participants.map(p => `<li><span class="participant-email">${p}</span><button class="delete-btn" data-activity="${name}" data-email="${p}" title="Remove">✖</button></li>`).join("")}
               </ul>
             </div>
           `;
@@ -87,8 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
         signupForm.reset();
 
         // Refresh activities and dropdown to show updated participants
-        fetchActivities();
-      } else {
+        await fetchActivities();
+      } else {"},{
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
       }
@@ -104,6 +105,38 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle participant removal via event delegation
+  activitiesList.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-btn")) {
+      const activityName = event.target.getAttribute("data-activity");
+      const email = event.target.getAttribute("data-email");
+      if (!confirm(`Remove ${email} from ${activityName}?`)) return;
+      try {
+        const res = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+        const result = await res.json();
+        if (res.ok) {
+          messageDiv.textContent = result.message;
+          messageDiv.className = "success";
+          messageDiv.classList.remove("hidden");
+          setTimeout(() => {
+            messageDiv.classList.add("hidden");
+          }, 5000);
+          // Refresh activities to show updated participants
+          await fetchActivities();
+        } else {
+          messageDiv.textContent = result.detail || "Failed to remove participant";
+          messageDiv.className = "error";
+          messageDiv.classList.remove("hidden");
+        }
+      } catch (err) {
+        messageDiv.textContent = "Failed to remove participant. Please try again.";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+        console.error("Error removing participant:", err);
+      }
     }
   });
 
